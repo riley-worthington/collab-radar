@@ -6,10 +6,30 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
+import {
+  Anchor,
+  ColorSchemeScript,
+  createTheme,
+  MantineProvider,
+} from "@mantine/core";
+import "@fontsource-variable/montserrat";
+// import "@fontsource-variable/nunito-sans";
 
-import "./tailwind.css";
+import "@mantine/core/styles.css";
+import { cssBundleHref } from "@remix-run/css-bundle";
+
+const theme = createTheme({
+  fontFamily: "Montserrat Variable, sans-serif",
+  headings: { fontFamily: "Montserrat Variable, sans-serif" },
+  components: {
+    Anchor: Anchor.extend({
+      defaultProps: { c: "white" },
+    }),
+  },
+});
 
 export const links: LinksFunction = () => [
+  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -30,9 +50,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <ColorSchemeScript defaultColorScheme="dark" />
       </head>
       <body>
-        {children}
+        <MantineProvider theme={theme} defaultColorScheme="dark">
+          {children}
+        </MantineProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
