@@ -6,6 +6,7 @@ import {
   useParams,
   useSearchParams,
   Await,
+  MetaFunction,
 } from "@remix-run/react";
 import { getArtist, getArtistSongs } from "~/server/genius-api.server";
 import ArtistPageHeader from "~/components/ArtistPageHeader";
@@ -18,6 +19,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const artist = await getArtist(artistId);
 
   return defer({ artist, songs });
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const title = `${data?.artist.name} - collab radar`;
+  return [
+    { title },
+    {
+      name: "description",
+      content: `see collabs and features for ${data?.artist.name}`,
+    },
+    {
+      property: "og:title",
+      content: title,
+    },
+  ];
 };
 
 export default function ArtistPage() {
