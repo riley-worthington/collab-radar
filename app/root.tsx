@@ -5,7 +5,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, MetaFunction } from "@remix-run/node";
 import {
   Anchor,
   ColorSchemeScript,
@@ -13,7 +13,6 @@ import {
   MantineProvider,
 } from "@mantine/core";
 import "@fontsource-variable/montserrat";
-// import "@fontsource-variable/nunito-sans";
 
 import "@mantine/core/styles.css";
 import { cssBundleHref } from "@remix-run/css-bundle";
@@ -27,6 +26,18 @@ const theme = createTheme({
     }),
   },
 });
+
+export const meta: MetaFunction = () => [
+  { title: "collab radar 🔊" },
+  {
+    name: "description",
+    content: "discover where your favorite artists have left their mark",
+  },
+  {
+    property: "og:title",
+    content: "collab radar 🔊",
+  },
+];
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
