@@ -4,7 +4,6 @@ import { LoaderFunctionArgs, defer } from "@remix-run/node";
 import {
   useLoaderData,
   useParams,
-  useSearchParams,
   Await,
   MetaFunction,
 } from "@remix-run/react";
@@ -40,8 +39,6 @@ export default function ArtistPage() {
   const params = useParams();
   const artistId = params.id!;
   const { artist, songs } = useLoaderData<typeof loader>();
-  const [searchParams] = useSearchParams();
-  const filter = searchParams.get("filter");
 
   return (
     <Box w="100vw">
@@ -50,13 +47,7 @@ export default function ArtistPage() {
         <Box maw={1200} w="100%" h="8rem">
           <Suspense fallback={<SongsLoading />} key={artistId}>
             <Await resolve={songs}>
-              {(songs) => (
-                <SongsDisplay
-                  artistId={artistId}
-                  songs={songs}
-                  filter={filter}
-                />
-              )}
+              {(songs) => <SongsDisplay artistId={artistId} songs={songs} />}
             </Await>
           </Suspense>
         </Box>
