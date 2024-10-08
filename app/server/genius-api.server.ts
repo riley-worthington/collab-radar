@@ -2,15 +2,15 @@ import {
   Artist,
   ArtistResponse,
   GeniusResponse,
+  SearchResponse,
   Song,
   SongsResponse,
 } from "~/types/genius.types";
 import { getCache, setCache } from "./redis.server";
 import chunkData from "./chunkData";
 import cacheInChunks from "./cacheInChunks";
-
-const GENIUS_API_URL = process.env.GENIUS_API_URL;
-const GENIUS_API_TOKEN = process.env.GENIUS_API_TOKEN;
+import { genius } from "./api.server";
+import Fuse, { IFuseOptions } from "fuse.js";
 
 async function getAllSongsByArtist(artistId: string): Promise<Song[]> {
   const songs = [];
@@ -22,9 +22,8 @@ async function getAllSongsByArtist(artistId: string): Promise<Song[]> {
       page: page.toString(),
       per_page: "50",
     });
-    const apiUrl = `${GENIUS_API_URL}/artists/${artistId}/songs?${params}`;
-    const data =
-      await fetchFromGeniusApi<GeniusResponse<SongsResponse>>(apiUrl);
+    const apiUrl = `/artists/${artistId}/songs?${params}`;
+    const { data } = await genius.get<GeniusResponse<SongsResponse>>(apiUrl);
 
     // only save the data we need
     const songResponse = data.response.songs.map((song) => {
@@ -57,14 +56,6 @@ async function getAllSongsByArtist(artistId: string): Promise<Song[]> {
   }
 
   return songs as Song[];
-}
-
-async function fetchFromGeniusApi<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${GENIUS_API_TOKEN}` },
-  });
-  const data = await response.json();
-  return data;
 }
 
 export async function getArtistSongs(artistId: string): Promise<Song[]> {
@@ -106,8 +97,8 @@ export async function getArtist(artistId: string): Promise<Artist> {
   }
 
   // If no cache, fetch from the Genius API
-  const apiUrl = `${GENIUS_API_URL}/artists/${artistId}`;
-  const data = await fetchFromGeniusApi<GeniusResponse<ArtistResponse>>(apiUrl);
+  const apiUrl = `/artists/${artistId}`;
+  const { data } = await genius.get<GeniusResponse<ArtistResponse>>(apiUrl);
 
   const artist = data.response.artist;
 
@@ -115,4 +106,35 @@ export async function getArtist(artistId: string): Promise<Artist> {
   await setCache(cacheKey, artist);
 
   return artist;
+}
+
+export async function searchArtists(query: string): Promise<Artist[]> {
+  const params = new URLSearchParams({ q: query });
+  const apiUrl = `/search?${params}`;
+  const { data } = await genius.get<GeniusResponse<SearchResponse>>(apiUrl);
+
+  const artists: Artist[] = [];
+  for (const hit of data.response.hits) {
+    for (const artist of hit.result.primary_artists) {
+      if (!artists.some((a) => a.id === artist.id)) {
+        artists.push(artist);
+      }
+    }
+    for (const artist of hit.result.featured_artists) {
+      if (!artists.some((a) => a.id === artist.id)) {
+        artists.push(artist);
+      }
+    }
+  }
+
+  // fuzzy search the results
+  const options: IFuseOptions<Artist> = {
+    ignoreLocation: true,
+    threshold: 0.2,
+    keys: ["name"],
+  };
+
+  const fuse = new Fuse(artists, options);
+
+  return fuse.search(query).map((result) => result.item);
 }

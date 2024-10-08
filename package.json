@@ -20,6 +20,8 @@
     "@remix-run/react": "^2.12.1",
     "@remix-run/serve": "^2.12.1",
     "@upstash/redis": "^1.34.2",
+    "axios": "^1.7.7",
+    "fuse.js": "^7.0.0",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
