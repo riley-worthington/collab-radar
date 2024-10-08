@@ -110,11 +110,20 @@ export async function getArtist(artistId: string): Promise<Artist> {
 
 export async function searchArtists(query: string): Promise<Artist[]> {
   const params = new URLSearchParams({ q: query });
+  const quotedParams = new URLSearchParams({ q: `"${query}"` }); // also search for the query with quotes around it for exact matches
+
   const apiUrl = `/search?${params}`;
-  const { data } = await genius.get<GeniusResponse<SearchResponse>>(apiUrl);
+  const quotedApiUrl = `/search?${quotedParams}`;
+
+  const [res1, res2] = await Promise.all([
+    genius.get<GeniusResponse<SearchResponse>>(apiUrl),
+    genius.get<GeniusResponse<SearchResponse>>(quotedApiUrl),
+  ]);
+
+  const hits = [...res1.data.response.hits, ...res2.data.response.hits];
 
   const artists: Artist[] = [];
-  for (const hit of data.response.hits) {
+  for (const hit of hits) {
     for (const artist of hit.result.primary_artists) {
       if (!artists.some((a) => a.id === artist.id)) {
         artists.push(artist);
@@ -136,5 +145,6 @@ export async function searchArtists(query: string): Promise<Artist[]> {
 
   const fuse = new Fuse(artists, options);
 
-  return fuse.search(query).map((result) => result.item);
+  const searchResults = fuse.search(query);
+  return searchResults.map((result) => result.item);
 }
