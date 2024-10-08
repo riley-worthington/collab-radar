@@ -11,6 +11,6 @@ export function setCache(key: string, value: unknown) {
   return redis.set(key, value, { ex: ONE_WEEK });
 }
 
-export function getCache(key: string) {
-  return redis.get(key);
+export function getCache<T>(key: string) {
+  return redis.get<T>(key);
 }

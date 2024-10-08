@@ -5,7 +5,7 @@ const SongsLoading = () => {
   return (
     <Center>
       <Flex align="center" gap={10}>
-        <Text>loading artist catalog</Text>
+        <Text>Loading discography...</Text>
         <div className={classes.spin}>💿</div>
       </Flex>
     </Center>

@@ -6,6 +6,8 @@ import {
   SongsResponse,
 } from "~/types/genius.types";
 import { getCache, setCache } from "./redis.server";
+import chunkData from "./chunkData";
+import cacheInChunks from "./cacheInChunks";
 
 const GENIUS_API_URL = process.env.GENIUS_API_URL;
 const GENIUS_API_TOKEN = process.env.GENIUS_API_TOKEN;
@@ -24,7 +26,28 @@ async function getAllSongsByArtist(artistId: string): Promise<Song[]> {
     const data =
       await fetchFromGeniusApi<GeniusResponse<SongsResponse>>(apiUrl);
 
-    songs.push(...data.response.songs);
+    // only save the data we need
+    const songResponse = data.response.songs.map((song) => {
+      return {
+        id: song.id,
+        title: song.title,
+        title_with_featured: song.title_with_featured,
+        url: song.url,
+        release_date_for_display: song.release_date_for_display,
+        primary_artists: song.primary_artists.map((artist) => ({
+          id: artist.id,
+          name: artist.name,
+        })),
+        header_image_url: song.header_image_url,
+        song_art_image_thumbnail_url: song.song_art_image_thumbnail_url,
+        featured_artists: song.featured_artists.map((artist) => ({
+          id: artist.id,
+          name: artist.name,
+        })),
+      };
+    });
+
+    songs.push(...songResponse);
 
     if (data.response.next_page) {
       totalPages = data.response.next_page;
@@ -33,7 +56,7 @@ async function getAllSongsByArtist(artistId: string): Promise<Song[]> {
     page++;
   }
 
-  return songs;
+  return songs as Song[];
 }
 
 async function fetchFromGeniusApi<T>(url: string): Promise<T> {
@@ -45,32 +68,41 @@ async function fetchFromGeniusApi<T>(url: string): Promise<T> {
 }
 
 export async function getArtistSongs(artistId: string): Promise<Song[]> {
-  const cacheKey = `artist_songs_${artistId}`;
+  const cacheKey = `artist:${artistId}:songs`;
+  const chunkCount = await getCache<number>(`${cacheKey}:chunk_count`);
 
-  // Check cache first
-  const cachedData = await getCache(cacheKey);
-  if (cachedData) {
-    console.log("Returning cached data");
-    return cachedData as Song[];
+  if (chunkCount) {
+    const songs = [];
+
+    for (let i = 0; i < chunkCount; i++) {
+      const chunk = await getCache<Song[]>(`${cacheKey}:chunk_${i}`);
+      if (chunk) {
+        songs.push(...chunk);
+      }
+    }
+
+    console.log("Returning chunked cached data");
+    return songs;
   }
 
   // If no cache, fetch from the Genius API
-  const data = await getAllSongsByArtist(artistId);
+  const songs = await getAllSongsByArtist(artistId);
 
   // Cache the result before returning it
-  await setCache(cacheKey, data);
+  const songChunks = chunkData<Song>(songs);
+  await cacheInChunks(cacheKey, songChunks);
 
-  return data;
+  return songs;
 }
 
 export async function getArtist(artistId: string): Promise<Artist> {
-  const cacheKey = `artist_${artistId}`;
+  const cacheKey = `artist:${artistId}`;
 
   // Check cache first
-  const cachedData = await getCache(cacheKey);
+  const cachedData = await getCache<Artist>(cacheKey);
   if (cachedData) {
     console.log("Returning cached data");
-    return cachedData as Artist;
+    return cachedData;
   }
 
   // If no cache, fetch from the Genius API
