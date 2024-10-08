@@ -8,6 +8,7 @@ import {
 import type { LinksFunction, MetaFunction } from "@remix-run/node";
 import {
   Anchor,
+  AppShell,
   ColorSchemeScript,
   createTheme,
   MantineProvider,
@@ -16,6 +17,7 @@ import "@fontsource-variable/montserrat";
 
 import "@mantine/core/styles.css";
 import { cssBundleHref } from "@remix-run/css-bundle";
+import AppHeader from "./components/AppHeader";
 
 const theme = createTheme({
   fontFamily: "Montserrat Variable, sans-serif",
@@ -25,6 +27,7 @@ const theme = createTheme({
       defaultProps: { c: "white" },
     }),
   },
+  defaultRadius: 0,
 });
 
 export const meta: MetaFunction = () => [
@@ -66,7 +69,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="dark">
-          {children}
+          <AppShell header={{ height: 60, offset: true }} padding={0}>
+            <AppHeader />
+            <AppShell.Main>{children}</AppShell.Main>
+          </AppShell>
         </MantineProvider>
         <ScrollRestoration />
         <Scripts />

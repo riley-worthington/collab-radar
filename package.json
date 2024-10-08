@@ -13,6 +13,7 @@
   "dependencies": {
     "@fontsource-variable/montserrat": "^5.1.0",
     "@fontsource-variable/nunito-sans": "^5.1.0",
+    "@heroicons/react": "^2.1.5",
     "@mantine/core": "^7.13.2",
     "@mantine/hooks": "^7.13.2",
     "@remix-run/css-bundle": "^2.12.1",
