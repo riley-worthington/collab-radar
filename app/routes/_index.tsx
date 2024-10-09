@@ -1,17 +1,11 @@
-import {
-  Box,
-  Button,
-  Center,
-  Flex,
-  Text,
-  TextInput,
-  Title,
-} from "@mantine/core";
+import { ActionIcon, Box, Flex, Text, TextInput } from "@mantine/core";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { json, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useState } from "react";
 import ArtistSearchResults from "~/components/ArtistSearchResults";
 import { searchArtists } from "~/server/genius-api.server";
+import classes from "../styles/HomePage.module.css";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -34,34 +28,58 @@ export default function Index() {
   const search = searchParams.get("q") || "";
   const [searchText, setSearchText] = useState(search);
 
-  console.log(hits);
+  const submitSearch = () => {
+    setSearchParams({ q: searchText });
+  };
+
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      submitSearch();
+    }
+  };
 
   return (
-    <>
-      <Center>
-        <Box>
-          <Title my="1rem">Search artists</Title>
-          <Flex>
-            <TextInput
-              placeholder="Search artists"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-            <Button onClick={() => setSearchParams({ q: searchText })}>
-              Search
-            </Button>
-          </Flex>
-        </Box>
-      </Center>
-      <Center>
-        <Box>
-          {!hits ? null : hits.length > 0 ? (
-            <ArtistSearchResults artists={hits} />
-          ) : (
-            <Text mt="1rem">No results</Text>
-          )}
-        </Box>
-      </Center>
-    </>
+    <Flex
+      mt="1rem"
+      h="100%"
+      mih="60vh"
+      direction="column"
+      justify={search ? "flex-start" : "center"}
+      align="center"
+    >
+      {!search && (
+        <Text size="2rem" ta="center" mb="4rem" fw="bold" c="#dad6ad">
+          discover where your favorite artists have left their mark.
+        </Text>
+      )}
+      <TextInput
+        placeholder="Search artists"
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        onKeyUp={handleKeyPress}
+        size="xl"
+        w={500}
+        classNames={{
+          input: classes["searchbar-input"],
+        }}
+        rightSection={
+          <ActionIcon
+            variant="transparent"
+            onClick={submitSearch}
+            className={classes["search-icon"]}
+          >
+            <MagnifyingGlassIcon />
+          </ActionIcon>
+        }
+      />
+
+      <Box>
+        {!hits ? null : hits.length > 0 ? (
+          <ArtistSearchResults artists={hits} />
+        ) : (
+          <Text mt="1rem">No results</Text>
+        )}
+      </Box>
+    </Flex>
   );
 }

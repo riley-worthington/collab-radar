@@ -45,7 +45,7 @@ export default function ArtistPage() {
     <Box>
       <ArtistPageHeader artist={artist} />
       <Center>
-        <Box maw={1200} w="100%" h="8rem">
+        <Box maw={1200} w="100%">
           <Suspense fallback={<SongsLoading />} key={artistId}>
             <Await resolve={songs}>
               {(songs) => (

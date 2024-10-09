@@ -6,6 +6,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction, MetaFunction } from "@remix-run/node";
+import { cssBundleHref } from "@remix-run/css-bundle";
 import {
   Anchor,
   AppShell,
@@ -13,11 +14,12 @@ import {
   createTheme,
   MantineProvider,
 } from "@mantine/core";
-import "@fontsource-variable/montserrat";
-
-import "@mantine/core/styles.css";
-import { cssBundleHref } from "@remix-run/css-bundle";
 import AppHeader from "./components/AppHeader";
+import AppFooter from "./components/AppFooter";
+import classes from "./styles/HomePage.module.css";
+
+import "@fontsource-variable/montserrat";
+import "@mantine/core/styles.css";
 
 const theme = createTheme({
   fontFamily: "Montserrat Variable, sans-serif",
@@ -69,9 +71,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="dark">
-          <AppShell header={{ height: 60, offset: true }} padding={0}>
+          <AppShell
+            header={{ height: 60 }}
+            footer={{ height: 40 }}
+            padding={0}
+            className={classes.home}
+          >
             <AppHeader />
-            <AppShell.Main>{children}</AppShell.Main>
+            <AppShell.Main pb={0}>{children}</AppShell.Main>
+            <AppFooter />
           </AppShell>
         </MantineProvider>
         <ScrollRestoration />
